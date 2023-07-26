@@ -37,17 +37,22 @@ if __name__=="__main__":
   args = parser.parse_args()
 
   for ext in EXTS:
-    for file_path in pathlib.Path("site/en").glob("**/*"+ext):
+    for file_path in pathlib.Path("site/en").glob(f"**/*{ext}"):
       content = file_path.read_text()
       if str(file_path) in EXPAND_TABLES:
-        content = re.sub("(<tr>.*?){}(.*?</tr>)".format(re.escape(args.old_version.short())),
-                         r"\g<1>{}\g<2>\n\g<0>".format(args.new_version.short()), content)
+        content = re.sub(
+            f"(<tr>.*?){re.escape(args.old_version.short())}(.*?</tr>)",
+            f"\g<1>{args.new_version.short()}\g<2>\n\g<0>",
+            content,
+        )
         file_path.write_text(content)
         continue
 
       content = file_path.read_text()
 
       content = content.replace(args.old_version.full(), args.new_version.full())
-      content = content.replace("github.com/tensorflow/tensorflow/blob/r"+args.old_version.short(),
-                                "github.com/tensorflow/tensorflow/blob/r"+args.old_version.short())
+      content = content.replace(
+          f"github.com/tensorflow/tensorflow/blob/r{args.old_version.short()}",
+          f"github.com/tensorflow/tensorflow/blob/r{args.old_version.short()}",
+      )
       file_path.write_text(content)

@@ -37,12 +37,11 @@ class TestPyGuideParser(py_guide_parser.PyGuideParser):
     self.calls.append((line_number, 'title', title))
 
   def process_section(self, line_number, section_title, tag):
-    self.calls.append((line_number, 'section',
-                       '%s : %s' % (section_title, tag)))
+    self.calls.append((line_number, 'section', f'{section_title} : {tag}'))
 
   def process_in_blockquote(self, line_number, line):
     self.calls.append((line_number, 'blockquote', line))
-    self.replace_line(line_number, line + ' BQ')
+    self.replace_line(line_number, f'{line} BQ')
 
   def process_line(self, line_number, line):
     self.calls.append((line_number, 'line', line))
@@ -57,9 +56,9 @@ class PyGuideParserTest(absltest.TestCase):
 
   def testBasics(self):
     tmp = os.path.join(self.workdir, 'py_guide_parser_test.md')
-    f = open(tmp, 'w')
-    f.write(
-        textwrap.dedent("""
+    with open(tmp, 'w') as f:
+      f.write(
+          textwrap.dedent("""
         # a title
         a line
         ## a section
@@ -68,7 +67,6 @@ class PyGuideParserTest(absltest.TestCase):
         ```
         out of blockquote
         """)[1:])
-    f.close()
     parser = TestPyGuideParser()
     result = parser.process(tmp)
     expected = textwrap.dedent("""

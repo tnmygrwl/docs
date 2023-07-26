@@ -47,7 +47,7 @@ class DocGeneratorVisitor(object):
   def set_root_name(self, root_name):
     """Sets the root name for subsequent __call__s."""
     self._root_name = root_name or ''
-    self._prefix = (root_name + '.') if root_name else ''
+    self._prefix = f'{root_name}.' if root_name else ''
 
   @property
   def index(self):
@@ -188,23 +188,14 @@ class DocGeneratorVisitor(object):
         # prefer the defining class
         defining_class_score = -1
 
-    contrib_score = -1
-    if 'contrib' in parts:
-      contrib_score = 1
-
+    contrib_score = 1 if 'contrib' in parts else -1
     while parts:
       parts.pop()
       container = self._index['.'.join(parts)]
       if tf_inspect.ismodule(container):
         break
     module_length = len(parts)
-    if len(parts) == 2:
-      # `tf.submodule.thing` is better than `tf.thing`
-      module_length_score = -1
-    else:
-      # shorter is better
-      module_length_score = module_length
-
+    module_length_score = -1 if len(parts) == 2 else module_length
     return (defining_class_score, contrib_score, module_length_score, name)
 
   def _maybe_find_duplicates(self):

@@ -125,11 +125,7 @@ def write_docs(output_dir,
       if not os.path.exists(directory):
         os.makedirs(directory)
       # This function returns raw bytes in PY2 or unicode in PY3.
-      if search_hints:
-        content = [page_info.get_metadata_html()]
-      else:
-        content = ['']
-
+      content = [page_info.get_metadata_html()] if search_hints else ['']
       content.append(pretty_docs.build_md_page(page_info))
       text = '\n'.join(content)
       if six.PY3:
@@ -137,8 +133,7 @@ def write_docs(output_dir,
       with open(path, 'wb') as f:
         f.write(text)
     except OSError:
-      raise OSError(
-          'Cannot write documentation for %s to %s' % (full_name, directory))
+      raise OSError(f'Cannot write documentation for {full_name} to {directory}')
 
     duplicates = parser_config.duplicates.get(full_name, [])
     if not duplicates:
@@ -180,19 +175,14 @@ def write_docs(output_dir,
         indent_num = max(indent_num, 1)
         indent = '  '*indent_num
 
-        if indent_num > 1:
-          # tf.contrib.baysflow.entropy will be under
-          #   tf.contrib->baysflow->entropy
-          title = module.split('.')[-1]
-        else:
-          title = module
-
+        title = module.split('.')[-1] if indent_num > 1 else module
         header = [
-            '- title: ' + title,
+            f'- title: {title}',
             '  section:',
             '  - title: Overview',
-            '    path: ' + os.path.join('/', site_api_path,
-                                        symbol_to_file[module])]
+            '    path: ' +
+            os.path.join('/', site_api_path, symbol_to_file[module]),
+        ]
         header = ''.join([indent+line+'\n' for line in header])
         f.write(header)
 
@@ -202,9 +192,10 @@ def write_docs(output_dir,
 
         for full_name in symbols_in_module:
           item = [
-              '  - title: ' + full_name[len(module) + 1:],
-              '    path: ' + os.path.join('/', site_api_path,
-                                          symbol_to_file[full_name])]
+              f'  - title: {full_name[len(module) + 1:]}',
+              '    path: ' +
+              os.path.join('/', site_api_path, symbol_to_file[full_name]),
+          ]
           item = ''.join([indent+line+'\n' for line in item])
           f.write(item)
 
@@ -294,8 +285,7 @@ def build_doc_index(src_dir):
       title_parser = _GetMarkdownTitle()
       title_parser.process(os.path.join(dirpath, base_name))
       if title_parser.title is None:
-        msg = ('`{}` has no markdown title (# title)'.format(
-            os.path.join(dirpath, base_name)))
+        msg = f'`{os.path.join(dirpath, base_name)}` has no markdown title (# title)'
         raise ValueError(msg)
       key_parts = os.path.join(suffix, base_name[:-3]).split('/')
       if key_parts[-1] == 'index':
@@ -311,13 +301,12 @@ def build_doc_index(src_dir):
 class _GuideRef(object):
 
   def __init__(self, base_name, title, section_title, section_tag):
-    self.url = 'api_guides/python/' + (('%s#%s' % (base_name, section_tag))
+    self.url = 'api_guides/python/' + (f'{base_name}#{section_tag}'
                                        if section_tag else base_name)
-    self.link_text = (('%s > %s' % (title, section_title))
-                      if section_title else title)
+    self.link_text = f'{title} > {section_title}' if section_title else title
 
   def make_md_link(self, url_prefix):
-    return '[%s](%s%s)' % (self.link_text, url_prefix, self.url)
+    return f'[{self.link_text}]({url_prefix}{self.url})'
 
 
 class _GenerateGuideIndex(py_guide_parser.PyGuideParser):
@@ -370,7 +359,7 @@ class _UpdateTags(py_guide_parser.PyGuideParser):
   """
 
   def process_section(self, line_number, section_title, tag):
-    self.replace_line(line_number, '<h2 id="%s">%s</h2>' % (tag, section_title))
+    self.replace_line(line_number, f'<h2 id="{tag}">{section_title}</h2>')
 
 
 def update_id_tags_inplace(src_dir):
@@ -394,7 +383,7 @@ def update_id_tags_inplace(src_dir):
         f.write(content)
 
 
-EXCLUDED = set(['__init__.py', 'OWNERS', 'README.txt'])
+EXCLUDED = {'__init__.py', 'OWNERS', 'README.txt'}
 
 
 def replace_refs(src_dir,

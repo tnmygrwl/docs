@@ -40,7 +40,7 @@ class PublicApiTest(absltest.TestCase):
     visitor = self.TestVisitor()
     children = [('name1', 'thing1'), ('name2', 'thing2')]
     public_api.PublicAPIVisitor(visitor)('test', 'dummy', children)
-    self.assertEqual(set(['test']), visitor.symbols)
+    self.assertEqual({'test'}, visitor.symbols)
     self.assertEqual('dummy', visitor.last_parent)
     self.assertEqual([('name1', 'thing1'), ('name2', 'thing2')],
                      visitor.last_children)

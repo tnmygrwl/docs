@@ -253,11 +253,7 @@ def should_skip(obj):
   """
   if isinstance(obj, type):
     # For classes, only skip if the attribute is set on _this_ class.
-    if _DO_NOT_DOC in obj.__dict__:
-      return True
-    else:
-      return False
-
+    return _DO_NOT_DOC in obj.__dict__
   # Unwrap fget if the object is a property
   if isinstance(obj, property):
     obj = obj.fget

@@ -43,15 +43,15 @@ if sys.version_info.major < 3:
     if isinstance(target, functools.partial):
       return _get_fullargspec_for_partial(target)
     argspecs = getargspec(target)
-    fullargspecs = FullArgSpec(
+    return FullArgSpec(
         args=argspecs.args,
         varargs=argspecs.varargs,
         varkw=argspecs.keywords,
         defaults=argspecs.defaults,
         kwonlyargs=[],
         kwonlydefaults=None,
-        annotations={})
-    return fullargspecs
+        annotations={},
+    )
 
   def getargspec(obj):
     """A py2 version of `inspect.getargspec`, more compatible with py3.
@@ -137,11 +137,8 @@ if sys.version_info.major < 3:
         idx = args.index(kw)
         all_defaults[idx] = default
 
-    # Split key-word only args and defaults from others.
-    # Everything from the first partial_keyword is now key-word only.
-    known_kws = [kw for kw in partial_keywords if kw in args]
-    if known_kws:
-      stop = min([args.index(kw) for kw in known_kws])
+    if known_kws := [kw for kw in partial_keywords if kw in args]:
+      stop = min(args.index(kw) for kw in known_kws)
       args, kwonlyargs = args[:stop], args[stop:]
       all_defaults, kwonlydefaults = all_defaults[:stop], all_defaults[stop:]
       kwonlydefaults = dict(zip(kwonlyargs, kwonlydefaults))

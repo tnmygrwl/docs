@@ -49,7 +49,7 @@ def _traverse_internal(root, visit, stack, path):
     if any(child is item for item in new_stack):  # `in`, but using `is`
       continue
 
-    child_path = path + '.' + name if path else name
+    child_path = f'{path}.{name}' if path else name
     _traverse_internal(child, visit, new_stack, child_path)
 
 

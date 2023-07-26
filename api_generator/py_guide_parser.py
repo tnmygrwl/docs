@@ -58,9 +58,8 @@ class PyGuideParser(object):
         self.process_title(i, line[2:])
       elif not in_blockquote and line.startswith('## '):
         section_title = line.strip()[3:]
-        existing_tag = re.search(' {([^}]+)} *$', line)
-        if existing_tag:
-          tag = existing_tag.group(1)
+        if existing_tag := re.search(' {([^}]+)} *$', line):
+          tag = existing_tag[1]
         else:
           tag = re.sub('[^a-zA-Z0-9]+', '_', section_title)
           if tag in seen:

@@ -52,7 +52,7 @@ def build_md_page(page_info):
   if page_info.for_module():
     return _build_module_page(page_info)
 
-  raise ValueError('Unknown Page Info Type: %s' % type(page_info))
+  raise ValueError(f'Unknown Page Info Type: {type(page_info)}')
 
 
 def _build_function_page(page_info):
@@ -68,22 +68,23 @@ def _build_function_page(page_info):
     parts.append(_build_signature(page_info))
 
   if page_info.defined_in:
-    parts.append('\n\n')
-    parts.append(str(page_info.defined_in))
-
-  parts.append(page_info.guides)
-  parts.append(page_info.doc.docstring)
-  parts.append(_build_function_details(page_info.doc.function_details))
-  parts.append(_build_compatibility(page_info.doc.compatibility))
-
+    parts.extend(('\n\n', str(page_info.defined_in)))
+  parts.extend((
+      page_info.guides,
+      page_info.doc.docstring,
+      _build_function_details(page_info.doc.function_details),
+      _build_compatibility(page_info.doc.compatibility),
+  ))
   return ''.join(parts)
 
 
 def _build_class_page(page_info):
   """Given a ClassPageInfo object Return the page as an md string."""
-  parts = ['# {page_info.full_name}\n\n'.format(page_info=page_info)]
+  parts = [
+      '# {page_info.full_name}\n\n'.format(page_info=page_info),
+      '## Class `%s`\n\n' % page_info.full_name.split('.')[-1],
+  ]
 
-  parts.append('## Class `%s`\n\n' % page_info.full_name.split('.')[-1])
   if page_info.bases:
     parts.append('Inherits From: ')
 
@@ -108,19 +109,14 @@ def _build_class_page(page_info):
     parts.append('\n')
 
   if page_info.defined_in is not None:
-    parts.append('\n\n')
-    parts.append(str(page_info.defined_in))
-
-  parts.append(page_info.guides)
-  parts.append(page_info.doc.docstring)
+    parts.extend(('\n\n', str(page_info.defined_in)))
+  parts.extend((page_info.guides, page_info.doc.docstring))
   parts.append(_build_function_details(page_info.doc.function_details))
-  parts.append(_build_compatibility(page_info.doc.compatibility))
-
-  parts.append('\n\n')
-
+  parts.extend((_build_compatibility(page_info.doc.compatibility), '\n\n'))
   if constructors:
-    for method_info in constructors:
-      parts.append(_build_method_section(method_info, heading_level=2))
+    parts.extend(
+        _build_method_section(method_info, heading_level=2)
+        for method_info in constructors)
     parts.append('\n\n')
 
   if page_info.classes:
@@ -138,21 +134,17 @@ def _build_class_page(page_info):
     parts.append('## Properties\n\n')
     for prop_info in page_info.properties:
       h3 = '<h3 id="{short_name}"><code>{short_name}</code></h3>\n\n'
-      parts.append(h3.format(short_name=prop_info.short_name))
-
-      parts.append(prop_info.doc.docstring)
+      parts.extend((h3.format(short_name=prop_info.short_name),
+                    prop_info.doc.docstring))
       parts.append(_build_function_details(prop_info.doc.function_details))
-      parts.append(_build_compatibility(prop_info.doc.compatibility))
-
-      parts.append('\n\n')
-
+      parts.extend((_build_compatibility(prop_info.doc.compatibility), '\n\n'))
     parts.append('\n\n')
 
   if other_methods:
     parts.append('## Methods\n\n')
 
-    for method_info in other_methods:
-      parts.append(_build_method_section(method_info))
+    parts.extend(
+        _build_method_section(method_info) for method_info in other_methods)
     parts.append('\n\n')
 
   if page_info.other_members:
@@ -179,20 +171,19 @@ def _build_method_section(method_info, heading_level=3):
   Returns:
     A markdown string.
   """
-  parts = []
   heading = ('<h{heading_level} id="{short_name}">'
              '<code>{short_name}</code>'
              '</h{heading_level}>\n\n')
-  parts.append(heading.format(heading_level=heading_level,
-                              **method_info._asdict()))
-
+  parts = [heading.format(heading_level=heading_level, **method_info._asdict())]
   if method_info.signature is not None:
     parts.append(_build_signature(method_info, use_full_name=False))
 
-  parts.append(method_info.doc.docstring)
-  parts.append(_build_function_details(method_info.doc.function_details))
-  parts.append(_build_compatibility(method_info.doc.compatibility))
-  parts.append('\n\n')
+  parts.extend((
+      method_info.doc.docstring,
+      _build_function_details(method_info.doc.function_details),
+      _build_compatibility(method_info.doc.compatibility),
+      '\n\n',
+  ))
   return ''.join(parts)
 
 
@@ -206,14 +197,9 @@ def _build_module_page(page_info):
     parts.append('\n')
 
   if page_info.defined_in is not None:
-    parts.append('\n\n')
-    parts.append(str(page_info.defined_in))
-
+    parts.extend(('\n\n', str(page_info.defined_in)))
   parts.append(page_info.doc.docstring)
-  parts.append(_build_compatibility(page_info.doc.compatibility))
-
-  parts.append('\n\n')
-
+  parts.extend((_build_compatibility(page_info.doc.compatibility), '\n\n'))
   if page_info.modules:
     parts.append('## Modules\n\n')
     template = '[`{short_name}`]({url}) module'
@@ -222,7 +208,7 @@ def _build_module_page(page_info):
       parts.append(template.format(**item._asdict()))
 
       if item.doc.brief:
-        parts.append(': ' + item.doc.brief)
+        parts.append(f': {item.doc.brief}')
 
       parts.append('\n\n')
 
@@ -234,7 +220,7 @@ def _build_module_page(page_info):
       parts.append(template.format(**item._asdict()))
 
       if item.doc.brief:
-        parts.append(': ' + item.doc.brief)
+        parts.append(f': {item.doc.brief}')
 
       parts.append('\n\n')
 
@@ -246,7 +232,7 @@ def _build_module_page(page_info):
       parts.append(template.format(**item._asdict()))
 
       if item.doc.brief:
-        parts.append(': ' + item.doc.brief)
+        parts.append(f': {item.doc.brief}')
 
       parts.append('\n\n')
 
@@ -256,9 +242,7 @@ def _build_module_page(page_info):
     parts.append('## Other Members\n\n')
 
     h3 = '<h3 id="{short_name}"><code>{short_name}</code></h3>\n\n'
-    for item in page_info.other_members:
-      parts.append(h3.format(**item._asdict()))
-
+    parts.extend(h3.format(**item._asdict()) for item in page_info.other_members)
   return ''.join(parts)
 
 
@@ -272,8 +256,6 @@ def _build_signature(obj_info, use_full_name=True):
         "tf.range(start, limit, delta=1, dtype=None, name='range')\n"
         '```\n\n')
 
-  parts = ['``` python']
-  parts.extend(['@' + dec for dec in obj_info.decorators])
   signature_template = '{name}({sig})'
 
   if not obj_info.signature:
@@ -281,16 +263,15 @@ def _build_signature(obj_info, use_full_name=True):
   elif len(obj_info.signature) == 1:
     sig = obj_info.signature[0]
   else:
-    sig = ',\n'.join('    %s' % sig_item for sig_item in obj_info.signature)
+    sig = ',\n'.join(f'    {sig_item}' for sig_item in obj_info.signature)
     sig = '\n'+sig+'\n'
 
-  if use_full_name:
-    obj_name = obj_info.full_name
-  else:
-    obj_name = obj_info.short_name
-  parts.append(signature_template.format(name=obj_name, sig=sig))
-  parts.append('```\n\n')
-
+  obj_name = obj_info.full_name if use_full_name else obj_info.short_name
+  parts = [
+      '``` python',
+      *[f'@{dec}' for dec in obj_info.decorators],
+      *(signature_template.format(name=obj_name, sig=sig), '```\n\n'),
+  ]
   return '\n'.join(parts)
 
 
@@ -312,11 +293,8 @@ def _build_function_details(function_details):
   """Return the function details section as an md string."""
   parts = []
   for detail in function_details:
-    sub = []
-    sub.append('#### ' + detail.keyword + ':\n\n')
-    sub.append(textwrap.dedent(detail.header))
-    for key, value in detail.items:
-      sub.append('* <b>`%s`</b>: %s' % (key, value))
+    sub = [f'#### {detail.keyword}' + ':\n\n', textwrap.dedent(detail.header)]
+    sub.extend(f'* <b>`{key}`</b>: {value}' for key, value in detail.items)
     parts.append(''.join(sub))
 
   return '\n'.join(parts)
